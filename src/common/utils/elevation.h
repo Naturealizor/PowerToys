@@ -83,9 +83,25 @@ namespace
     inline bool GetDesktopAutomationObject(REFIID riid, void** ppv)
     {
         CComPtr<IShellView> spsv;
-        if (!FindDesktopFolderView(IID_PPV_ARGS(&spsv)))
+        
+        // Desktop may not be available on startup
+        auto attempt = 0;
+        while (true)
         {
-            return false;
+            if (attempt > 9)
+            {
+                Logger::warn(L"FindDesktopFolderView() max number of attempts reached");
+                return false;
+            }
+
+            if (FindDesktopFolderView(IID_PPV_ARGS(&spsv)))
+            {
+                break;
+            }
+
+            Logger::warn(L"FindDesktopFolderView() failed attempt {}", attempt);
+            Sleep(3000);
+            attempt++;
         }
 
         CComPtr<IDispatch> spdispView;
